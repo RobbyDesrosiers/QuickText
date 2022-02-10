@@ -1,92 +1,13 @@
 from ui.main_window import Ui_MainWindow
-from models.contact import Contact, ContactList
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QIcon
-import json
+from models.windows import ErrorMessage, StartupWindow, FileWindow
+from models.objects import Contact, ContactList
 import sys
 import PyQt5
 import csv
-
-
-class ErrorMessage(QMessageBox):
-    def __init__(self, parent=None):
-        super(ErrorMessage, self).__init__(parent)
-        self.setWindowTitle("Incorrect file type")
-        self.setText("Warning")
-        self.setIcon(QMessageBox.Information)
-        self.setStandardButtons(QMessageBox.Cancel)
-        self.setDefaultButton(QMessageBox.Cancel)
-
-    def set_text(self, message):
-        self.setInformativeText(f"{message}")
-
-    def show_window(self):
-        self.exec_()
-
-
-class FileWindow(QWidget):
-
-    def __init__(self):
-        super().__init__()
-        self.title = "File Explorer"
-        self._screen_center = self.screen_center()
-        self.width = 640
-        self.height = 480
-        self.left = self._screen_center.x() - self.width // 2
-        self.top = self._screen_center.y() - self.height // 2
-        self.file = None
-        self.initUI()
-
-    def screen_center(self):
-        screen = PyQt5.QtWidgets.QApplication.desktop().screenNumber(PyQt5.QtWidgets.QApplication.desktop().cursor().pos())
-        centerPoint = PyQt5.QtWidgets.QApplication.desktop().screenGeometry(screen).center()
-        return centerPoint
-
-    def initUI(self):
-        self.setWindowTitle(self.title)
-        self.setGeometry(self.left, self.top, self.width, self.height)
-
-        self.openFileNameDialog()
-        self.show()
-
-    def openFileNameDialog(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
-                                                  "All Files (*);;CSV Files (*.csv)", options=options)
-        if fileName:
-            if fileName[-4:] == ".csv":
-                self.file = fileName
-            else:
-                self.file = None
-
-
-    @property
-    def file_name(self) -> str:
-        return self.file
-
-
-class StartupWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setupUi(self)
-        """
-        in cmd
-        set TWILIO_ACCOUNT_SID=ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        set TWILIO_AUTH_TOKEN=your_auth_token
-        """
-
-        self.json_info = {
-        }
-        self.create_json()
-
-    def create_json(self):
-        # Serializing json
-        json_object = json.dumps(self.json_info, indent=4)
-
-        # Writing to sample.json
-        with open("./settings.json", "w") as outfile:
-            outfile.write(json_object)
+import json
+import os.path, time
 
 
 class Main(QMainWindow, Ui_MainWindow):
@@ -94,18 +15,45 @@ class Main(QMainWindow, Ui_MainWindow):
         super().__init__(parent)
         self.setupUi(self)
         self.contact_list: ContactList = None
-        self.csv_variables_names: list[str] = None
-        self.setWindowTitle("Ryan Green: Texting Program v0.1")
+        self.setWindowTitle("MassTextMessenger v0.1")
 
-        # read json file for file name, use in csv if found
-        self.csv_file_location = None  # https://stackoverflow.com/questions/19078170/python-how-would-you-save-a-simple-settings-config-file
+        # variables
+        self.csv_variables_names: list[str] = None
+        self.user_settings = {
+            "csvLocation": None,
+            "csvLastModDate": None
+        }
+
+        self.load_json()
+
+        if self.user_settings['csvLocation']:
+            self.render_table()
+        else:
+            self.lbl_last_mod.setHidden(True)
 
         # clicked buttons
-        self.btn_csv_input.clicked.connect(self.load_csv_file)
+        self.btn_csv_input.clicked.connect(self.load_csv_from_file_window)
         self.btn_variables.clicked.connect(self.add_variable)
         self.ent_text_field.textChanged.connect(self.text_change)
         self.tbl_csv_viewer.clicked.connect(self.text_change)
         self.btn_send_message.clicked.connect(self.send_messages)
+
+    def update_last_modified_date(self):
+        self.lbl_last_mod.setHidden(False)
+        self.lbl_last_mod.setText(self.user_settings['csvLastModDate'])
+
+    def write_json(self):
+        with open('settings.json', 'w', encoding='utf-8') as file:
+            json.dump(self.user_settings, file)
+
+    def load_json(self):
+        with open('settings.json', 'r', encoding='utf-8') as file:
+            try:
+                contents = json.loads(file.read())
+                self.user_settings = contents
+                return contents
+            except json.decoder.JSONDecodeError:
+                print("No json obj")
 
     def throw_error_window(self, error_text: str, error=None):
         messagebox = ErrorMessage(self)
@@ -193,22 +141,36 @@ class Main(QMainWindow, Ui_MainWindow):
             menu.addAction(variable_type)
         self.btn_variables.setMenu(menu)
 
-    def load_csv_file(self):
+    def load_csv_from_file_window(self):
         file_window = FileWindow()
         if file_window.file_name is None:  # error
             self.throw_error_window("The file you are attempting to select is not a .csv, please select a .csv file")
             return
 
-        self.csv_file_location = file_window.file_name
+        self.user_settings['csvLocation'] = file_window.file_name
+        self.user_settings['csvLastModDate'] = time.ctime(os.path.getmtime(self.user_settings['csvLocation']))
+        self.write_json()
+        self.render_table()
+
+    def clear_memory(self):
+        self.tbl_csv_viewer.clear()
+        try:
+            self.contact_list.clear()
+        except AttributeError as error:
+            pass
+
+    def render_table(self):
+        self.clear_memory()
         self.tbl_csv_viewer.generate_table(self.generate_objects())
         self.lbl_item.setText(f"Contacts: {len(self.contact_list)}")
         self.csv_variables_names = [f";;{item}::".replace(";;", "{{").replace("::", "}}") for item in self.tbl_csv_viewer.horizontal_labels]
         self.create_variable_menu()
         self.tbl_csv_viewer.resizeColumnsToContents()
-        # todo write to json file to load later
+        self.update_last_modified_date()
 
     def generate_objects(self) -> ContactList:
-        with open(self.csv_file_location) as file:
+        print(self.user_settings['csvLocation'])
+        with open(self.user_settings['csvLocation']) as file:
             dict_reader = csv.DictReader(file)
             for contact_info in dict_reader:
                 contact = Contact(contact_info)
@@ -217,9 +179,9 @@ class Main(QMainWindow, Ui_MainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyle('')
-    app_icon = QIcon('../icons/main_header_image.png')
-    app.setWindowIcon(app_icon)
+    # app.setStyle('')
+    # app_icon = QIcon('../icons/main_header_image.png')
+    # app.setWindowIcon(app_icon)
     win = Main()
     win.show()
     sys.exit(app.exec())

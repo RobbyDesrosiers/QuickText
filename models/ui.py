@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QTableWidget
-from models.contact import ContactList
+from PyQt5.QtWidgets import QTextEdit, QPushButton, QTableWidget, QMessageBox
+from models.objects import ContactList
 import PyQt5
 
 class CsvTable(QTableWidget):
@@ -10,10 +10,6 @@ class CsvTable(QTableWidget):
         self.setColumnCount(self.column_count)
         self._horizontal_labels = []
         self.setHorizontalHeaderLabels(self.horizontal_labels)
-
-
-        self.horizontalScrollBar().setDisabled(True)
-        self.horizontalScrollBar().setHidden(True)
 
     @property
     def horizontal_labels(self):
@@ -73,3 +69,13 @@ class CsvTable(QTableWidget):
                 self.setItem(row, column, PyQt5.QtWidgets.QTableWidgetItem(str(contact_info.get(self.horizontal_labels[column]))))
 
         self.set_horizontal_labels()
+
+
+class VariableButton(QPushButton):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+
+class Textbox(QTextEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
