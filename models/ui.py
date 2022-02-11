@@ -1,5 +1,7 @@
+import csv
+
 from PyQt5.QtWidgets import QTextEdit, QPushButton, QTableWidget, QMessageBox
-from models.objects import ContactList
+from models.objects import ContactList, Contact
 import PyQt5
 
 class CsvTable(QTableWidget):
@@ -48,8 +50,8 @@ class CsvTable(QTableWidget):
         # if loaded, set the labels in the table (since we are most likely generating table)
         self.setHorizontalHeaderLabels(self.horizontal_labels)
 
-    def generate_table(self, contacts: ContactList):
-        self.contact_list = contacts
+    def generate_table(self, csv_file_location):
+        contacts = self.generate_objects(csv_file_location)
         self.set_horizontal_labels()
         ROW_HEIGHT = 10
 
@@ -69,6 +71,15 @@ class CsvTable(QTableWidget):
                 self.setItem(row, column, PyQt5.QtWidgets.QTableWidgetItem(str(contact_info.get(self.horizontal_labels[column]))))
 
         self.set_horizontal_labels()
+        return contacts
+
+    def generate_objects(self, csv_file_location) -> ContactList:
+        with open(csv_file_location) as file:
+            dict_reader = csv.DictReader(file)
+            for contact_info in dict_reader:
+                contact = Contact(contact_info)
+            self.contact_list = contact.list()
+        return self.contact_list
 
 
 class VariableButton(QPushButton):

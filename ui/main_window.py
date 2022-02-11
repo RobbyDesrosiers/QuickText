@@ -45,6 +45,7 @@ class Ui_MainWindow(object):
         self.gridLayout_3.addWidget(self.btn_csv_input, 2, 1, 1, 1)
         self.tbl_csv_viewer = CsvTable(self.centralwidget)
         self.tbl_csv_viewer.setMaximumSize(QtCore.QSize(1200, 16777215))
+        self.tbl_csv_viewer.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.tbl_csv_viewer.setObjectName("tbl_csv_viewer")
         self.gridLayout_3.addWidget(self.tbl_csv_viewer, 1, 0, 1, 2)
         self.lbl_last_mod = QtWidgets.QLabel(self.centralwidget)

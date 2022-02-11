@@ -30,17 +30,7 @@ class StartupWindow(QMainWindow, Ui_MainWindow):
         set TWILIO_AUTH_TOKEN=your_auth_token
         """
 
-        self.json_info = {
-        }
-        self.create_json()
 
-    def create_json(self):
-        # Serializing json
-        json_object = json.dumps(self.json_info, indent=4)
-
-        # Writing to sample.json
-        with open("./settings.json", "w") as outfile:
-            outfile.write(json_object)
 
 
 class FileWindow(QWidget):

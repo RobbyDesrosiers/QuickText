@@ -1,3 +1,5 @@
+import json
+
 import twilio.base.exceptions
 from twilio.rest import Client
 
@@ -7,6 +9,7 @@ class ContactList(list):
 
 class Contact:
     contact_list = ContactList()
+
     account_sid = ""
     auth_token = ""
     try:
@@ -44,3 +47,39 @@ class Contact:
 
     def list(self) -> ContactList:
         return self.contact_list
+
+class UserSettings:
+    def __init__(self):
+        self._settings = {
+            "csvLocation": None,
+            "csvLastModDate": None
+        }
+
+    def __setitem__(self, key, value):
+        self._settings[key] = value
+
+    def __getitem__(self, key):
+        return self.settings[key]
+
+    @property
+    def settings(self):
+        return self._settings
+
+    @settings.setter
+    def settings(self, value):
+        self._settings = value
+
+    def save(self):
+        with open('settings.json', 'w', encoding='utf-8') as file:
+            json.dump(self._settings, file)
+
+    def load(self):
+        with open('settings.json', 'r', encoding='utf-8') as file:
+            try:
+                contents = json.loads(file.read())
+                self._settings = contents
+                return contents
+            except json.decoder.JSONDecodeError:
+                print("No json obj: in class user - temp fix")
+
+

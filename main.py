@@ -2,12 +2,8 @@ from ui.main_window import Ui_MainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QIcon
 from models.windows import ErrorMessage, StartupWindow, FileWindow
-from models.objects import Contact, ContactList
-import sys
-import PyQt5
-import csv
-import json
-import os.path, time
+from models.objects import ContactList, UserSettings
+import os.path, time, PyQt5, sys
 
 
 class Main(QMainWindow, Ui_MainWindow):
@@ -16,18 +12,15 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.contact_list: ContactList = None
         self.setWindowTitle("MassTextMessenger v0.1")
+        self.check_setup()
 
         # variables
+        self.user_settings = UserSettings()
+        self.user_settings.load()
         self.csv_variables_names: list[str] = None
-        self.user_settings = {
-            "csvLocation": None,
-            "csvLastModDate": None
-        }
-
-        self.load_json()
 
         if self.user_settings['csvLocation']:
-            self.render_table()
+            self.load_csv_file()
         else:
             self.lbl_last_mod.setHidden(True)
 
@@ -38,22 +31,12 @@ class Main(QMainWindow, Ui_MainWindow):
         self.tbl_csv_viewer.clicked.connect(self.text_change)
         self.btn_send_message.clicked.connect(self.send_messages)
 
+    def check_setup(self):
+
+
     def update_last_modified_date(self):
         self.lbl_last_mod.setHidden(False)
         self.lbl_last_mod.setText(self.user_settings['csvLastModDate'])
-
-    def write_json(self):
-        with open('settings.json', 'w', encoding='utf-8') as file:
-            json.dump(self.user_settings, file)
-
-    def load_json(self):
-        with open('settings.json', 'r', encoding='utf-8') as file:
-            try:
-                contents = json.loads(file.read())
-                self.user_settings = contents
-                return contents
-            except json.decoder.JSONDecodeError:
-                print("No json obj")
 
     def throw_error_window(self, error_text: str, error=None):
         messagebox = ErrorMessage(self)
@@ -70,7 +53,7 @@ class Main(QMainWindow, Ui_MainWindow):
             if char in bad_text:
                 raise ValueError("Illegal characters in message")
 
-    def clear_all(self):
+    def clear_all_fields(self):
         self.ent_preview.setText("")
         self.ent_text_field.setText("")
 
@@ -92,7 +75,7 @@ class Main(QMainWindow, Ui_MainWindow):
         except TypeError as error:
             self.throw_error_window("Please load a CSV file in before sending a message", error)
 
-        self.clear_all()
+        self.clear_all_fields()
 
 
     def replace_variables_with_text(self, message: str, contact_info: dict):
@@ -100,7 +83,6 @@ class Main(QMainWindow, Ui_MainWindow):
             csv_var = self.csv_variables_names[i]
             contact_info_key = contact_info.get(key)
             message = message.replace(csv_var, contact_info_key)
-
         return message
 
     def text_change(self):
@@ -149,33 +131,24 @@ class Main(QMainWindow, Ui_MainWindow):
 
         self.user_settings['csvLocation'] = file_window.file_name
         self.user_settings['csvLastModDate'] = time.ctime(os.path.getmtime(self.user_settings['csvLocation']))
-        self.write_json()
-        self.render_table()
+        self.user_settings.save()
+        self.load_csv_file()
 
     def clear_memory(self):
-        self.tbl_csv_viewer.clear()
         try:
+            self.tbl_csv_viewer.clear()
             self.contact_list.clear()
         except AttributeError as error:
             pass
 
-    def render_table(self):
+    def load_csv_file(self):
         self.clear_memory()
-        self.tbl_csv_viewer.generate_table(self.generate_objects())
+        self.contact_list = self.tbl_csv_viewer.generate_table(self.user_settings['csvLocation'])
         self.lbl_item.setText(f"Contacts: {len(self.contact_list)}")
         self.csv_variables_names = [f";;{item}::".replace(";;", "{{").replace("::", "}}") for item in self.tbl_csv_viewer.horizontal_labels]
         self.create_variable_menu()
         self.tbl_csv_viewer.resizeColumnsToContents()
         self.update_last_modified_date()
-
-    def generate_objects(self) -> ContactList:
-        print(self.user_settings['csvLocation'])
-        with open(self.user_settings['csvLocation']) as file:
-            dict_reader = csv.DictReader(file)
-            for contact_info in dict_reader:
-                contact = Contact(contact_info)
-            self.contact_list = contact.list()
-        return self.contact_list
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
