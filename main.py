@@ -12,11 +12,11 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.contact_list: ContactList = None
         self.setWindowTitle("MassTextMessenger v0.1")
-        self.check_setup()
+        self.user_settings = UserSettings()
+        self.user_settings.load_all()
+        self.is_setup_needed()
 
         # variables
-        self.user_settings = UserSettings()
-        self.user_settings.load()
         self.csv_variables_names: list[str] = None
 
         if self.user_settings['csvLocation']:
@@ -31,8 +31,12 @@ class Main(QMainWindow, Ui_MainWindow):
         self.tbl_csv_viewer.clicked.connect(self.text_change)
         self.btn_send_message.clicked.connect(self.send_messages)
 
-    def check_setup(self):
-
+    def is_setup_needed(self):
+        if self.user_settings.twilio_account_sid is None:
+            setup_window = StartupWindow(self)
+            setup_window.show()
+        else:
+            return False
 
     def update_last_modified_date(self):
         self.lbl_last_mod.setHidden(False)

@@ -1,6 +1,11 @@
+import os
+
 from PyQt5.QtWidgets import QMessageBox, QMainWindow, QWidget, QFileDialog
 import PyQt5
+
+from models.objects import UserSettings
 from ui.main_window import Ui_MainWindow
+from ui.setup_window import Ui_SetupWindow
 import json
 
 
@@ -20,15 +25,28 @@ class ErrorMessage(QMessageBox):
         self.exec_()
 
 
-class StartupWindow(QMainWindow, Ui_MainWindow):
+class StartupWindow(QMainWindow, Ui_SetupWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        """
-        in cmd
-        set TWILIO_ACCOUNT_SID=ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        set TWILIO_AUTH_TOKEN=your_auth_token
-        """
+        self.user_settings = UserSettings()
+        self.btn_submit.clicked.connect(self.submit)
+
+    def submit(self):
+        try:
+            self.user_settings.twilio_account_sid = self.ent_account_sid.text()
+            self.user_settings.twilio_auth_token = self.ent_auth_token.text()
+        except ValueError as error:
+            self.throw_error_window("Cannot set account information", error)
+
+    def throw_error_window(self, error_text: str, error=None):
+        messagebox = ErrorMessage(self)
+
+        if error:
+            messagebox.setText(f"{error_text}\nError Message: {error}")
+        else:
+            messagebox.setText(f"{error_text}")
+        messagebox.show_window()
 
 
 
