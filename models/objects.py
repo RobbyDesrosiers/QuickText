@@ -78,6 +78,7 @@ class UserSettings:
         print(os.getenv('TWILIO_ACCOUNT_SID', None))
         cls.twilio_account_sid = config('TWILIO_ACCOUNT_SID')
         cls.twilio_auth_token = config('TWILIO_AUTH_TOKEN')
+        # test
 
     def load_all(self):
         self.load_twilio_env_variables()
