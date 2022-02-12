@@ -1,7 +1,7 @@
 from ui.main_window import Ui_MainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QIcon
-from models.windows import ErrorMessage, StartupWindow, FileWindow
+from models.windows import ErrorWindow, StartupWindow, FileWindow
 from models.objects import ContactList, UserSettings
 import os.path, time, PyQt5, sys
 
@@ -32,7 +32,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self.btn_refresh.clicked.connect(self.load_csv_file)
 
     def is_setup_needed(self):
-        print(self.user_settings.get_twilio_account_sid())
+        print(self.user_settings.get_twilio_account_sid())  # todo delete
+        print(self.user_settings.get_twilio_auth_token())   # todo delete
         if self.user_settings.get_twilio_account_sid() is None:
             setup_window = StartupWindow(self)
             setup_window.show()
@@ -42,7 +43,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.lbl_last_mod.setText(f"Last Modified Date: {self.user_settings['csvLastModDate']}")
 
     def throw_error_window(self, error_text: str, error=None):
-        messagebox = ErrorMessage(self)
+        messagebox = ErrorWindow(self)
 
         if error:
             messagebox.setText(f"{error_text}\nError Message: {error}")

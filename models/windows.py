@@ -1,5 +1,6 @@
 import os
 
+from PyQt5 import QtGui
 from PyQt5.QtWidgets import QMessageBox, QMainWindow, QWidget, QFileDialog
 import PyQt5
 
@@ -9,9 +10,9 @@ from ui.setup_window import Ui_SetupWindow
 import json
 
 
-class ErrorMessage(QMessageBox):
+class ErrorWindow(QMessageBox):
     def __init__(self, parent=None):
-        super(ErrorMessage, self).__init__(parent)
+        super(ErrorWindow, self).__init__(parent)
         self.setWindowTitle("Incorrect file type")
         self.setText("Warning")
         self.setIcon(QMessageBox.Information)
@@ -29,7 +30,10 @@ class StartupWindow(QMainWindow, Ui_SetupWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+        self.setWindowTitle("Twilio Information")
         self.user_settings = UserSettings()
+        self.ent_account_sid.setEchoMode(PyQt5.QtWidgets.QLineEdit.Password)
+        self.ent_auth_token.setEchoMode(PyQt5.QtWidgets.QLineEdit.Password)
         self.btn_submit.clicked.connect(self.submit)
         self.btn_cancel.clicked.connect(self.close)
 
@@ -37,13 +41,14 @@ class StartupWindow(QMainWindow, Ui_SetupWindow):
         try:
             self.user_settings.set_twilio_account_sid(self.ent_account_sid.text())
             self.user_settings.set_twilio_auth_token(self.ent_auth_token.text())
+            self.user_settings.set_twilio_phone_number(self.ent_phone_number.text())
             self.close()
         except ValueError as error:
             self.throw_error_window("Cannot set account information", error)
             return
 
     def throw_error_window(self, error_text: str, error=None):
-        messagebox = ErrorMessage(self)
+        messagebox = ErrorWindow(self)
 
         if error:
             messagebox.setText(f"{error_text}\nError Message: {error}")

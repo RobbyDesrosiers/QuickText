@@ -2,6 +2,7 @@ import json
 import os
 import twilio.base.exceptions
 from twilio.rest import Client
+import phonenumbers
 
 class ContactList(list):
     pass
@@ -12,6 +13,12 @@ class Contact:
 
     def __init__(self, contact_info, append=True):
         self._info: dict = contact_info
+        self.user_settings = UserSettings()
+        print(self.user_settings.get_twilio_phone_number())
+        self.client = Client(
+            self.user_settings.get_twilio_account_sid(),
+            self.user_settings.get_twilio_auth_token()
+        )
         if append:
             self.contact_list.append(self)
 
@@ -22,21 +29,18 @@ class Contact:
     def info(self) -> dict:
         return self._info
 
-    @info.setter
-    def info(self, value: dict):
-        self._name = value
-
     def text_contact(self, body):
         # todo add max number
+        # todo make srue phone is valid
         try:
             print(f"f: +19513836718\nt: {self.info['phone']}\nb: {body}")
+            message = self.client.messages.create(
+                body='Hi there',
+                from_=self.user_settings.get_twilio_phone_number(),
+                to=f"+1{self._phone}"
+            )
         except KeyError:
             raise KeyError("No phone in spreadsheet\nPlease ensure phone column is named 'phone'")
-        # message = self.client.messages.create(
-        #     body='Hi there',
-        #     from_='+19513836718',
-        #     to=f"+1{self._phone}"
-        # )
 
     def list(self) -> ContactList:
         return self.contact_list
@@ -45,6 +49,7 @@ class Contact:
 class UserSettings:
     twilio_account_sid = None
     twilio_auth_token = None
+    twilio_phone_number = None
 
     def __init__(self):
         self._settings = {
@@ -73,12 +78,10 @@ class UserSettings:
 
     @classmethod
     def load_twilio_env_variables(cls):
-        # replace with below if you want StartupWindow to show
         cls.twilio_account_sid = os.getenv('TWILIO_ACCOUNT_SID')
         cls.twilio_auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+        cls.twilio_phone_number = os.getenv('TWILIO_PHONE_NUMBER')
 
-        # cls.twilio_account_sid = None
-        # cls.twilio_auth_token = None
 
     def load_all(self):
         self.load_twilio_env_variables()
@@ -116,6 +119,23 @@ class UserSettings:
         else:
             os.environ["TWILIO_AUTH_TOKEN"] = value
             cls.twilio_auth_token = value
+
+    @classmethod
+    def get_twilio_phone_number(cls):
+        return cls.twilio_phone_number
+
+    @classmethod
+    def set_twilio_phone_number(cls, value):
+        # todo make better converter
+        if len(value) == 10:
+            value = f"+1{value}"
+        if len(value) == 11:
+            value = f"+{value}"
+
+        value = f"+1{phonenumbers.parse(value).national_number}"
+
+        os.environ["TWILIO_PHONE_NUMBER"] = value
+        cls.twilio_phone_number = value
 
 
 
