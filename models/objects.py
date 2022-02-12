@@ -1,7 +1,5 @@
 import json
 import os
-from decouple import config
-
 import twilio.base.exceptions
 from twilio.rest import Client
 
@@ -75,10 +73,12 @@ class UserSettings:
 
     @classmethod
     def load_twilio_env_variables(cls):
-        print(os.getenv('TWILIO_ACCOUNT_SID', None))
-        cls.twilio_account_sid = config('TWILIO_ACCOUNT_SID')
-        cls.twilio_auth_token = config('TWILIO_AUTH_TOKEN')
-        # test 1
+        # replace with below if you want StartupWindow to show
+        cls.twilio_account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+        cls.twilio_auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+
+        # cls.twilio_account_sid = None
+        # cls.twilio_auth_token = None
 
     def load_all(self):
         self.load_twilio_env_variables()
@@ -101,8 +101,7 @@ class UserSettings:
         if value is None or value is EMPTY:
             raise ValueError("Nonetype cannot be set")
         else:
-            with open('enviroment.env', 'w', encoding='utf-8') as file:
-                file.write(value)
+            os.environ["TWILIO_ACCOUNT_SID"] = value
             cls.twilio_account_sid = value
 
     @classmethod
@@ -115,7 +114,7 @@ class UserSettings:
         if value is None or value is EMPTY:
             raise ValueError("Nonetype cannot be set")
         else:
-            os.environ["TWILIO_ACCOUNT_SID"] = value
+            os.environ["TWILIO_AUTH_TOKEN"] = value
             cls.twilio_auth_token = value
 
 

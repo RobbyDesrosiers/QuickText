@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>791</width>
-    <height>362</height>
+    <width>899</width>
+    <height>383</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_4" rowstretch="0,0" columnstretch="2,3">
+   <layout class="QGridLayout" name="gridLayout_4" columnstretch="4,6">
     <item row="0" column="0">
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="0">
@@ -51,30 +51,14 @@
     </item>
     <item row="0" column="1" rowspan="2">
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="2" column="0">
-       <widget class="QLabel" name="lbl_item">
+      <item row="0" column="0" colspan="2">
+       <widget class="QLabel" name="lbl_last_mod">
         <property name="text">
-         <string>Items: 0</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         <string>{filename} last modified date:</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QPushButton" name="btn_csv_input">
-        <property name="maximumSize">
-         <size>
-          <width>71</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Load CSV</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" colspan="2">
+      <item row="1" column="0" colspan="3">
        <widget class="CsvTable" name="tbl_csv_viewer">
         <property name="maximumSize">
          <size>
@@ -87,10 +71,39 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="lbl_last_mod">
+      <item row="2" column="0">
+       <widget class="QLabel" name="lbl_item">
         <property name="text">
-         <string>{filename} last modified date:</string>
+         <string>Items: 0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QPushButton" name="btn_refresh">
+        <property name="maximumSize">
+         <size>
+          <width>71</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Refresh</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QPushButton" name="btn_csv_input">
+        <property name="maximumSize">
+         <size>
+          <width>71</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Load CSV</string>
         </property>
        </widget>
       </item>
@@ -137,7 +150,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>791</width>
+     <width>899</width>
      <height>21</height>
     </rect>
    </property>

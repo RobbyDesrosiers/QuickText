@@ -29,6 +29,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.ent_text_field.textChanged.connect(self.text_change)
         self.tbl_csv_viewer.clicked.connect(self.text_change)
         self.btn_send_message.clicked.connect(self.send_messages)
+        self.btn_refresh.clicked.connect(self.load_csv_file)
 
     def is_setup_needed(self):
         print(self.user_settings.get_twilio_account_sid())
@@ -38,7 +39,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def update_last_modified_date(self):
         self.lbl_last_mod.setHidden(False)
-        self.lbl_last_mod.setText(self.user_settings['csvLastModDate'])
+        self.lbl_last_mod.setText(f"Last Modified Date: {self.user_settings['csvLastModDate']}")
 
     def throw_error_window(self, error_text: str, error=None):
         messagebox = ErrorMessage(self)
@@ -62,7 +63,6 @@ class Main(QMainWindow, Ui_MainWindow):
     def send_messages(self):
         try:
             for contact in self.contact_list:
-
                 # catches sanitize_message error if 'bad_text' is true
                 try:
                     message = self.replace_variables_with_text(self.ent_text_field.toPlainText(), contact.info)
@@ -81,9 +81,16 @@ class Main(QMainWindow, Ui_MainWindow):
 
 
     def replace_variables_with_text(self, message: str, contact_info: dict):
+        EMPTY = ""
         for i, key in enumerate(self.tbl_csv_viewer.horizontal_labels):
             csv_var = self.csv_variables_names[i]
             contact_info_key = contact_info.get(key)
+
+            # catches if cell is empty
+            # if contact_info_key is EMPTY:
+            #     raise ValueError("Variable used contains empty cell")
+            # todo catch this then make sure cell isnt sent and user is notified (maybe bool variable in contact or something?
+
             message = message.replace(csv_var, contact_info_key)
         return message
 
