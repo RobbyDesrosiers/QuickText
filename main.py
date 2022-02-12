@@ -4,39 +4,56 @@ from PyQt5.QtGui import QIcon
 from models.windows import ErrorWindow, StartupWindow, FileWindow
 from models.objects import ContactList, UserSettings
 import os.path, time, PyQt5, sys
+from twilio.rest import Client
 
 
 class Main(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.contact_list: ContactList = None
+        self.contact_list: ContactList = None       # gets loaded in from load_csv_file
         self.setWindowTitle("MassTextMessenger v0.1")
+        self.lbl_last_mod.setHidden(False)
+
         self.user_settings = UserSettings()
+        self.client = None
+        self.twilio_balance: float = None
+        self.csv_variables_names: list[str] = None
         self.is_setup_needed()
 
-        # variables
-        self.csv_variables_names: list[str] = None
-
-        if self.user_settings['csvLocation']:
-            self.load_csv_file()
-        else:
-            self.lbl_last_mod.setHidden(True)
+        # text changed
+        self.ent_text_field.textChanged.connect(self.text_change)
 
         # clicked buttons
         self.btn_csv_input.clicked.connect(self.load_csv_from_file_window)
         self.btn_variables.clicked.connect(self.add_variable)
-        self.ent_text_field.textChanged.connect(self.text_change)
         self.tbl_csv_viewer.clicked.connect(self.text_change)
         self.btn_send_message.clicked.connect(self.send_messages)
         self.btn_refresh.clicked.connect(self.load_csv_file)
 
     def is_setup_needed(self):
-        print(self.user_settings.get_twilio_account_sid())  # todo delete
-        print(self.user_settings.get_twilio_auth_token())   # todo delete
+        # loads setup window if environment variables are not set
         if self.user_settings.get_twilio_account_sid() is None:
             setup_window = StartupWindow(self)
             setup_window.show()
+            return True
+        else:
+            self.client = Client(
+                self.user_settings.get_twilio_account_sid(),
+                self.user_settings.get_twilio_auth_token()
+            )
+            # checks if csv is in settings.json, loads csv if true
+            if self.user_settings['csvLocation']:
+                self.load_csv_file()
+            self.refresh_twilio_balance()
+            return False
+
+    def refresh_twilio_balance(self):
+        self.twilio_balance = self.client.api.v2010.account.balance.fetch().balance
+        self.setWindowTitle(f"MassTextMessenger v0.1 | Balance: {self.twilio_balance}")
+
+    def twilio_available_phone_numbers(self):
+        return self.client.api.v2010.incoming_phone_numbers.list()
 
     def update_last_modified_date(self):
         self.lbl_last_mod.setHidden(False)
@@ -62,6 +79,14 @@ class Main(QMainWindow, Ui_MainWindow):
         self.ent_text_field.setText("")
 
     def send_messages(self):
+        # todo count amount of successful messages, display amount after
+        EMPTY = ""
+
+        # checks if message field is empty
+        if self.ent_text_field.toPlainText() == EMPTY:
+            self.throw_error_window("Text message is empty")
+            return
+
         try:
             for contact in self.contact_list:
                 # catches sanitize_message error if 'bad_text' is true
@@ -79,7 +104,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.throw_error_window("Please load a CSV file in before sending a message", error)
 
         self.clear_all_fields()
-
+        self.refresh_twilio_balance()
 
     def replace_variables_with_text(self, message: str, contact_info: dict):
         EMPTY = ""
@@ -87,10 +112,10 @@ class Main(QMainWindow, Ui_MainWindow):
             csv_var = self.csv_variables_names[i]
             contact_info_key = contact_info.get(key)
 
+            # todo catch this then make sure cell isnt sent and user is notified (maybe bool variable in contact or something?
             # catches if cell is empty
             # if contact_info_key is EMPTY:
             #     raise ValueError("Variable used contains empty cell")
-            # todo catch this then make sure cell isnt sent and user is notified (maybe bool variable in contact or something?
 
             message = message.replace(csv_var, contact_info_key)
         return message
@@ -133,6 +158,22 @@ class Main(QMainWindow, Ui_MainWindow):
             menu.addAction(variable_type)
         self.btn_variables.setMenu(menu)
 
+    def select_phone_number_from_menu(self, action: PyQt5.QtWidgets.QAction):
+        # catches variable clicked before csv loaded error
+        try:
+            phone_number_selected = action.text()[0:12]  #0:12 is string slicing the phone number
+            self.user_settings.set_twilio_phone_number(phone_number_selected)
+            self.lbl_selected_phone_number.setText(phone_number_selected)
+        except AttributeError as error:
+            self.throw_error_window(f"Please load a CSV file in before sending a message", error)
+
+    def create_phone_number_menu(self):
+        menu = PyQt5.QtWidgets.QMenu()
+        menu.triggered.connect(self.select_phone_number_from_menu)
+        for phone_number in self.twilio_available_phone_numbers():
+            menu.addAction(f"{phone_number.phone_number} ({phone_number.friendly_name})")
+        self.btn_phone_numbers.setMenu(menu)
+
     def load_csv_from_file_window(self):
         file_window = FileWindow()
         if file_window.file_name is None:  # error
@@ -152,11 +193,13 @@ class Main(QMainWindow, Ui_MainWindow):
             pass
 
     def load_csv_file(self):
+        self.lbl_last_mod.setHidden(False)
         self.clear_memory()
         self.contact_list = self.tbl_csv_viewer.generate_table(self.user_settings['csvLocation'])
         self.lbl_item.setText(f"Contacts: {len(self.contact_list)}")
         self.csv_variables_names = [f";;{item}::".replace(";;", "{{").replace("::", "}}") for item in self.tbl_csv_viewer.horizontal_labels]
         self.create_variable_menu()
+        self.create_phone_number_menu()
         self.tbl_csv_viewer.resizeColumnsToContents()
         self.update_last_modified_date()
 

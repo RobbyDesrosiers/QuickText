@@ -13,7 +13,7 @@ import json
 class ErrorWindow(QMessageBox):
     def __init__(self, parent=None):
         super(ErrorWindow, self).__init__(parent)
-        self.setWindowTitle("Incorrect file type")
+        self.setWindowTitle("Warning: Error")
         self.setText("Warning")
         self.setIcon(QMessageBox.Information)
         self.setStandardButtons(QMessageBox.Cancel)

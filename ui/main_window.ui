@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>899</width>
-    <height>383</height>
+    <width>929</width>
+    <height>330</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_4" columnstretch="4,6">
+   <layout class="QGridLayout" name="gridLayout_4">
     <item row="0" column="0">
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="0">
@@ -24,7 +24,7 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0" colspan="2">
+      <item row="1" column="0" colspan="4">
        <widget class="Textbox" name="ent_text_field">
         <property name="maximumSize">
          <size>
@@ -35,6 +35,41 @@
        </widget>
       </item>
       <item row="2" column="1">
+       <widget class="QLabel" name="lbl_selected_phone_number">
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="VariableButton" name="btn_phone_numbers">
+        <property name="minimumSize">
+         <size>
+          <width>80</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Phone Numbers</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
        <widget class="VariableButton" name="btn_variables">
         <property name="maximumSize">
          <size>
@@ -150,7 +185,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>899</width>
+     <width>929</width>
      <height>21</height>
     </rect>
    </property>

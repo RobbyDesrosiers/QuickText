@@ -14,11 +14,11 @@ class Contact:
     def __init__(self, contact_info, append=True):
         self._info: dict = contact_info
         self.user_settings = UserSettings()
-        print(self.user_settings.get_twilio_phone_number())
         self.client = Client(
             self.user_settings.get_twilio_account_sid(),
             self.user_settings.get_twilio_auth_token()
         )
+
         if append:
             self.contact_list.append(self)
 
@@ -35,9 +35,9 @@ class Contact:
         try:
             print(f"f: +19513836718\nt: {self.info['phone']}\nb: {body}")
             message = self.client.messages.create(
-                body='Hi there',
+                body=body,
                 from_=self.user_settings.get_twilio_phone_number(),
-                to=f"+1{self._phone}"
+                to=f"+1{self.info['phone']}"
             )
         except KeyError:
             raise KeyError("No phone in spreadsheet\nPlease ensure phone column is named 'phone'")
@@ -125,15 +125,22 @@ class UserSettings:
         return cls.twilio_phone_number
 
     @classmethod
-    def set_twilio_phone_number(cls, value):
+    def set_twilio_phone_number(cls, value: str):
         # todo make better converter
+        value = value\
+            .replace(" ", "")\
+            .replace("-", "")\
+            .replace("/", "")\
+            .replace("_", "")\
+            .replace("(", "")\
+            .replace(")", "")
         if len(value) == 10:
             value = f"+1{value}"
         if len(value) == 11:
             value = f"+{value}"
 
         value = f"+1{phonenumbers.parse(value).national_number}"
-
+        print(value)
         os.environ["TWILIO_PHONE_NUMBER"] = value
         cls.twilio_phone_number = value
 
