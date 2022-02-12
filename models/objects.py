@@ -1,5 +1,6 @@
 import json
 import os
+from decouple import config
 
 import twilio.base.exceptions
 from twilio.rest import Client
@@ -10,13 +11,6 @@ class ContactList(list):
 
 class Contact:
     contact_list = ContactList()
-
-    account_sid = ""
-    auth_token = ""
-    try:
-        client = Client(account_sid, auth_token)
-    except twilio.base.exceptions.TwilioException:
-        print("input creds")
 
     def __init__(self, contact_info, append=True):
         self._info: dict = contact_info
@@ -49,14 +43,17 @@ class Contact:
     def list(self) -> ContactList:
         return self.contact_list
 
+
 class UserSettings:
+    twilio_account_sid = None
+    twilio_auth_token = None
+
     def __init__(self):
         self._settings = {
             "csvLocation": None,
             "csvLastModDate": None
         }
-        self._twilio_account_sid = None
-        self._twilio_auth_token = None
+        self.load_all()
 
     def __setitem__(self, key, value):
         self._settings[key] = value
@@ -76,11 +73,15 @@ class UserSettings:
         with open('settings.json', 'w', encoding='utf-8') as file:
             json.dump(self._settings, file)
 
-    def load_twilio_env_variables(self):
-        self._twilio_account_sid = os.environ["TWILIO_ACCOUNT_SID"]
-        self._twilio_auth_tocken = os.environ["TWILIO_AUTH_TOKEN"]
+    @classmethod
+    def load_twilio_env_variables(cls):
+        print(os.getenv('TWILIO_ACCOUNT_SID', None))
+        cls.twilio_account_sid = config('TWILIO_ACCOUNT_SID')
+        cls.twilio_auth_token = config('TWILIO_AUTH_TOKEN')
 
     def load_all(self):
+        self.load_twilio_env_variables()
+
         with open('settings.json', 'r', encoding='utf-8') as file:
             try:
                 contents = json.loads(file.read())
@@ -88,29 +89,33 @@ class UserSettings:
                 return contents
             except json.decoder.JSONDecodeError:
                 print("No json obj: in class user - temp fix")
-        self.load_twilio_env_variables()
 
-    @property
-    def twilio_account_sid(self):
-        return self._twilio_account_sid
+    @classmethod
+    def get_twilio_account_sid(self):
+        return self.twilio_account_sid
 
-    @twilio_account_sid.setter
-    def twilio_account_sid(self, value):
+    @classmethod
+    def set_twilio_account_sid(cls, value):
         EMPTY = ""
         if value is None or value is EMPTY:
             raise ValueError("Nonetype cannot be set")
-        self._twilio_account_sid = value
+        else:
+            with open('enviroment.env', 'w', encoding='utf-8') as file:
+                file.write(value)
+            cls.twilio_account_sid = value
 
-    @property
-    def twilio_auth_token(self):
-        return self._twilio_auth_token
+    @classmethod
+    def get_twilio_auth_token(cls):
+        return cls.twilio_auth_token
 
-    @twilio_auth_token.setter
-    def twilio_auth_token(self, value):
+    @classmethod
+    def set_twilio_auth_token(cls, value):
         EMPTY = ""
         if value is None or value is EMPTY:
             raise ValueError("Nonetype cannot be set")
-        self._twilio_auth_token = value
+        else:
+            os.environ["TWILIO_ACCOUNT_SID"] = value
+            cls.twilio_auth_token = value
 
 
 

@@ -13,7 +13,6 @@ class Main(QMainWindow, Ui_MainWindow):
         self.contact_list: ContactList = None
         self.setWindowTitle("MassTextMessenger v0.1")
         self.user_settings = UserSettings()
-        self.user_settings.load_all()
         self.is_setup_needed()
 
         # variables
@@ -32,11 +31,10 @@ class Main(QMainWindow, Ui_MainWindow):
         self.btn_send_message.clicked.connect(self.send_messages)
 
     def is_setup_needed(self):
-        if self.user_settings.twilio_account_sid is None:
+        print(self.user_settings.get_twilio_account_sid())
+        if self.user_settings.get_twilio_account_sid() is None:
             setup_window = StartupWindow(self)
             setup_window.show()
-        else:
-            return False
 
     def update_last_modified_date(self):
         self.lbl_last_mod.setHidden(False)
