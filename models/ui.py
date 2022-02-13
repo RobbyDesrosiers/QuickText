@@ -78,23 +78,21 @@ class CsvTable(QTableWidget):
 
     def generate_objects(self, csv_file_location) -> ContactList:
         OFFSET = 1  # used for col offset because 0th index
+        row_count = 0
 
         with open(csv_file_location) as file:
             dict_reader: list[dict] = csv.DictReader(file)
 
             for i, contact_info in enumerate(dict_reader):
-
+                row_count += 1
                 # iterates over first contact once, to check for phone column
                 if not contact_info.get('phone'):
                     raise ValueError("CSV needs 'phone' column, please insert a column named: phone")
-
-                # bad idea... moving this to send_messages
-                # if not phonenumbers.is_valid_number(phonenumbers.parse(f"+1{contact_info.get('phone')}")):
-                #     raise ValueError(f"Phone number in column {i} is invalid")
-
-
                 contact = Contact(contact_info)
-            self.contact_list = contact.list()
+
+        if row_count > 499:
+            raise ValueError("CSV is over 500 rows long, please reduce to < 500")
+        self.contact_list = contact.list()
         return self.contact_list
 
 

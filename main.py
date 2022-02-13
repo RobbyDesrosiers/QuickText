@@ -212,6 +212,10 @@ class Main(QMainWindow, Ui_MainWindow):
             phone_number_selected = action.text()[0:12]  #0:12 is string slicing the phone number
             self.user_settings.set_twilio_phone_number(phone_number_selected)
             self.lbl_selected_phone_number.setText(phone_number_selected)
+
+            for item in self.client.messages.list(limit=100, to=self.user_settings.get_twilio_phone_number()):
+                print(item.from_, item.to, item.body)
+
         except AttributeError as error:
             self.show_error_window(f"Please load a CSV file in before sending a message", error)
 
@@ -225,6 +229,7 @@ class Main(QMainWindow, Ui_MainWindow):
     def load_csv_from_file_window(self):
         file_window = FileWindow()
         if file_window.file_name is None:  # error
+            file_window.close()
             self.show_error_window("The file you are attempting to select is not a .csv, please select a .csv file")
             return
 
@@ -246,8 +251,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self.clear_memory()
         try:
             self.contact_list = self.tbl_csv_viewer.generate_table(self.user_settings['csvLocation'])
-        except ValueError as error:
-            self.show_error_window(error)
+        except (ValueError, UnboundLocalError) as error:
+            self.show_error_window("could not load CSV", error)
             return
         self.lbl_item.setText(f"Contacts: {len(self.contact_list)}")
         self.create_variable_menu()
