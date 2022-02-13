@@ -32,7 +32,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.btn_send_message.clicked.connect(self.send_messages)
         self.btn_refresh.clicked.connect(self.load_csv_file)
 
-    def setup_twiio_client(self):
+    def setup_twilio_client(self):
         self.client = Client(
             self.user_settings.get_twilio_account_sid(),
             self.user_settings.get_twilio_auth_token()
@@ -45,7 +45,7 @@ class Main(QMainWindow, Ui_MainWindow):
             setup_window.show()
             return True
         else:
-            self.setup_twiio_client()
+            self.setup_twilio_client()
             # checks if csv is in settings.json, loads csv if true
             if self.user_settings['csvLocation']:
                 self.load_csv_file()
@@ -92,12 +92,19 @@ class Main(QMainWindow, Ui_MainWindow):
         self.ent_text_field.setText("")
 
     def send_messages(self):
-        count = 0
+        count_success = 0
+        count_failure = 0
         EMPTY = ""
+        success = None
 
         # checks if message field is empty
         if self.ent_text_field.toPlainText() == EMPTY:
             self.show_error_window("Text message is empty")
+            return
+
+        # checks if user selected a phone number
+        if self.user_settings.get_twilio_phone_number() is None:
+            self.show_error_window("Select a phone number before sending the message")
             return
 
         try:
@@ -110,8 +117,12 @@ class Main(QMainWindow, Ui_MainWindow):
                     self.show_error_window(error)
                     return
                 try:
-                    contact.text_contact(message)
-                    count += 1
+                    success = contact.text_contact(message)
+                    if success is True:
+                        count_success += 1
+                    else:
+                        count_failure += 1
+
                 except KeyError as error:
                     self.show_error_window(error)
         except TypeError as error:
@@ -119,19 +130,14 @@ class Main(QMainWindow, Ui_MainWindow):
 
         self.clear_all_fields()
         self.refresh_twilio_balance()
-        self.show_success_window(f"{count} contacts texted successfully")
+        self.show_success_window(f"{count_success} contacts texted successfully\n"
+                                 f"{count_failure} contacts failed to send due to invalid phone number")
 
     def replace_variables_with_text(self, message: str, contact_info: dict):
         EMPTY = ""
         for i, key in enumerate(self.tbl_csv_viewer.horizontal_labels):
             csv_var = self.csv_variables_names[i]
             contact_info_key = contact_info.get(key)
-
-            # todo catch this then make sure cell isnt sent and user is notified (maybe bool variable in contact or something?
-            # catches if cell is empty
-            # if contact_info_key is EMPTY:
-            #     raise ValueError("Variable used contains empty cell")
-
             message = message.replace(csv_var, contact_info_key)
         return message
 
@@ -163,10 +169,14 @@ class Main(QMainWindow, Ui_MainWindow):
         col_name = col_name.replace("{{", "").replace("}}", "")
 
         cells_missing_data = []
-        # adds missing data cells to list
+        # adds missing data cells to list to display count
         for i, contact in enumerate(self.contact_list):
             if contact.info[col_name] == EMPTY:
                 cells_missing_data.append(i + OFFSET)
+
+            # ensures phone error pops up before missing data in cells error
+            if contact.info['phone'] == EMPTY:
+                raise ValueError(f"Phone column empty in row {i + OFFSET}")
 
         if cells_missing_data:
             raise ValueError(f"Col: {col_name} missing data in cells:\n{[str(int) for int in cells_missing_data]}")
@@ -189,6 +199,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.show_error_window(f"Please load a CSV file in before sending a message", error)
 
     def create_variable_menu(self):
+        self.csv_variables_names = [f";;{item}::".replace(";;", "{{").replace("::", "}}") for item in self.tbl_csv_viewer.horizontal_labels]
         menu = PyQt5.QtWidgets.QMenu()
         menu.triggered.connect(self.add_variable)
         for variable_type in self.csv_variables_names:
@@ -230,12 +241,15 @@ class Main(QMainWindow, Ui_MainWindow):
             pass
 
     def load_csv_file(self):
-        self.setup_twiio_client()
+        self.setup_twilio_client()
         self.lbl_last_mod.setHidden(False)
         self.clear_memory()
-        self.contact_list = self.tbl_csv_viewer.generate_table(self.user_settings['csvLocation'])
+        try:
+            self.contact_list = self.tbl_csv_viewer.generate_table(self.user_settings['csvLocation'])
+        except ValueError as error:
+            self.show_error_window(error)
+            return
         self.lbl_item.setText(f"Contacts: {len(self.contact_list)}")
-        self.csv_variables_names = [f";;{item}::".replace(";;", "{{").replace("::", "}}") for item in self.tbl_csv_viewer.horizontal_labels]
         self.create_variable_menu()
         self.create_phone_number_menu()
         self.tbl_csv_viewer.resizeColumnsToContents()

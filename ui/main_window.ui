@@ -89,7 +89,7 @@
       <item row="0" column="0" colspan="2">
        <widget class="QLabel" name="lbl_last_mod">
         <property name="text">
-         <string>{filename} last modified date:</string>
+         <string/>
         </property>
        </widget>
       </item>

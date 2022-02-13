@@ -1,5 +1,6 @@
 import csv
 
+import phonenumbers
 from PyQt5.QtWidgets import QTextEdit, QPushButton, QTableWidget, QMessageBox
 from models.objects import ContactList, Contact
 import PyQt5
@@ -18,8 +19,8 @@ class CsvTable(QTableWidget):
         return self._horizontal_labels
 
     @horizontal_labels.setter
-    def horizonal_labels(self, value):
-        self._horizontal_labels = value
+    def horizonal_labels(self, value: str):
+        self._horizontal_labels = value.lower()
 
     def add_header(self, header_name: str):
         self.horizontal_labels.append(header_name)
@@ -76,9 +77,22 @@ class CsvTable(QTableWidget):
         return contacts
 
     def generate_objects(self, csv_file_location) -> ContactList:
+        OFFSET = 1  # used for col offset because 0th index
+
         with open(csv_file_location) as file:
-            dict_reader = csv.DictReader(file)
-            for contact_info in dict_reader:
+            dict_reader: list[dict] = csv.DictReader(file)
+
+            for i, contact_info in enumerate(dict_reader):
+
+                # iterates over first contact once, to check for phone column
+                if not contact_info.get('phone'):
+                    raise ValueError("CSV needs 'phone' column, please insert a column named: phone")
+
+                # bad idea... moving this to send_messages
+                # if not phonenumbers.is_valid_number(phonenumbers.parse(f"+1{contact_info.get('phone')}")):
+                #     raise ValueError(f"Phone number in column {i} is invalid")
+
+
                 contact = Contact(contact_info)
             self.contact_list = contact.list()
         return self.contact_list

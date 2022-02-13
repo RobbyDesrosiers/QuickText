@@ -30,17 +30,20 @@ class Contact:
         return self._info
 
     def text_contact(self, body):
-        # todo add max number
-        # todo make srue phone is valid
-        try:
-            print(f"f: +19513836718\nt: {self.info['phone']}\nb: {body}")
-            message = self.client.messages.create(
-                body=body,
-                from_=self.user_settings.get_twilio_phone_number(),
-                to=f"+1{self.info['phone']}"
-            )
-        except KeyError:
-            raise KeyError("No phone in spreadsheet\nPlease ensure phone column is named 'phone'")
+        if not phonenumbers.is_valid_number(phonenumbers.parse(f"+1{self.info.get('phone')}")):
+            return False
+
+        # debug output for console, swap in prod
+        print(f"f: {self.user_settings.get_twilio_phone_number()}\n"
+              f"t: {self.info['phone']}\n"
+              f"b: {body}")
+
+        # self.client.messages.create(  # todo uncomment this
+        #     body=body,
+        #     from_=self.user_settings.get_twilio_phone_number(),
+        #     to=f"+1{self.info['phone']}"
+        # )
+        return True
 
     def list(self) -> ContactList:
         return self.contact_list
@@ -126,21 +129,6 @@ class UserSettings:
 
     @classmethod
     def set_twilio_phone_number(cls, value: str):
-        # todo make better converter
-        value = value\
-            .replace(" ", "")\
-            .replace("-", "")\
-            .replace("/", "")\
-            .replace("_", "")\
-            .replace("(", "")\
-            .replace(")", "")
-        if len(value) == 10:
-            value = f"+1{value}"
-        if len(value) == 11:
-            value = f"+{value}"
-
-        value = f"+1{phonenumbers.parse(value).national_number}"
-        print(value)
         os.environ["TWILIO_PHONE_NUMBER"] = value
         cls.twilio_phone_number = value
 
