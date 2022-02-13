@@ -6,194 +6,220 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>884</width>
-    <height>369</height>
+    <width>893</width>
+    <height>454</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_4" columnstretch="3,4">
-    <item row="1" column="0">
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="lbl_preview">
-        <property name="text">
-         <string>Preview</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" colspan="2">
-       <widget class="QTextEdit" name="ent_preview">
-        <property name="maximumSize">
-         <size>
-          <width>800</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QPushButton" name="btn_send_message">
-        <property name="maximumSize">
-         <size>
-          <width>71</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Send</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="1" rowspan="2">
-     <layout class="QGridLayout" name="gridLayout_3">
-      <item row="0" column="0" colspan="2">
-       <widget class="QLabel" name="lbl_last_mod">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" colspan="3">
-       <widget class="CsvTable" name="tbl_csv_viewer">
-        <property name="maximumSize">
-         <size>
-          <width>1200</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="selectionBehavior">
-         <enum>QAbstractItemView::SelectRows</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="lbl_item">
-        <property name="text">
-         <string>Items: 0</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QPushButton" name="btn_refresh">
-        <property name="maximumSize">
-         <size>
-          <width>71</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Refresh</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QPushButton" name="btn_csv_input">
-        <property name="maximumSize">
-         <size>
-          <width>71</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Load CSV</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
+   <layout class="QGridLayout" name="gridLayout_5">
     <item row="0" column="0">
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QLabel" name="lbl_text">
-        <property name="text">
-         <string>Text</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" colspan="4">
-       <widget class="Textbox" name="ent_text_field">
-        <property name="maximumSize">
-         <size>
-          <width>800</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="lbl_selected_phone_number">
-        <property name="maximumSize">
-         <size>
-          <width>100</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="VariableButton" name="btn_phone_numbers">
-        <property name="minimumSize">
-         <size>
-          <width>80</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>100</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Phone Numbers</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="VariableButton" name="btn_variables">
-        <property name="maximumSize">
-         <size>
-          <width>71</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Variables</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
+     <widget class="QStackedWidget" name="stacked_frame">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>1</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
+      </property>
+      <widget class="QWidget" name="quick_text_widget">
+       <layout class="QGridLayout" name="gridLayout_4" columnstretch="3,4">
+        <item row="1" column="0">
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="lbl_preview">
+            <property name="text">
+             <string>Preview</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QTextEdit" name="ent_preview">
+            <property name="maximumSize">
+             <size>
+              <width>800</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QPushButton" name="btn_send_message">
+            <property name="maximumSize">
+             <size>
+              <width>71</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Send</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1" rowspan="2">
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="0" column="0" colspan="2">
+           <widget class="QLabel" name="lbl_last_mod">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="3">
+           <widget class="CsvTable" name="tbl_csv_viewer">
+            <property name="maximumSize">
+             <size>
+              <width>1200</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="lbl_item">
+            <property name="text">
+             <string>Items: 0</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QPushButton" name="btn_refresh">
+            <property name="maximumSize">
+             <size>
+              <width>71</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Refresh</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QPushButton" name="btn_csv_input">
+            <property name="maximumSize">
+             <size>
+              <width>71</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Load CSV</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="0">
+           <widget class="QLabel" name="lbl_text">
+            <property name="text">
+             <string>Text</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="4">
+           <widget class="Textbox" name="ent_text_field">
+            <property name="maximumSize">
+             <size>
+              <width>800</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="lbl_selected_phone_number">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="VariableButton" name="btn_phone_numbers">
+            <property name="minimumSize">
+             <size>
+              <width>80</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Phone Numbers</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="VariableButton" name="btn_variables">
+            <property name="maximumSize">
+             <size>
+              <width>71</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Variables</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="messages_widget">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QTableWidget" name="tableWidget"/>
+        </item>
+       </layout>
+      </widget>
+     </widget>
     </item>
    </layout>
+   <zorder>stacked_frame</zorder>
+   <zorder>btn_refresh</zorder>
+   <zorder>btn_phone_numbers</zorder>
+   <zorder>lbl_selected_phone_number</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>884</width>
+     <width>893</width>
      <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>File</string>
+     <string>Window</string>
     </property>
-    <addaction name="actionMessages"/>
+    <addaction name="action_messages"/>
+    <addaction name="action_quick_text"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -202,9 +228,14 @@
     <string>Quit</string>
    </property>
   </action>
-  <action name="actionMessages">
+  <action name="action_messages">
    <property name="text">
     <string>Messages</string>
+   </property>
+  </action>
+  <action name="action_quick_text">
+   <property name="text">
+    <string>QuickText</string>
    </property>
   </action>
  </widget>

@@ -34,9 +34,9 @@ class Contact:
             return False
 
         # debug output for console, swap in prod
-        print(f"f: {self.user_settings.get_twilio_phone_number()}\n"
-              f"t: {self.info['phone']}\n"
-              f"b: {body}")
+        print(f"F: {self.user_settings.get_twilio_phone_number()}\n"
+              f"T: {self.info['phone']}\n"
+              f"B: {body}\n")
 
         # self.client.messages.create(  # todo uncomment this
         #     body=body,

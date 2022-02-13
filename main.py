@@ -15,6 +15,12 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setWindowTitle("MassTextMessenger v0.1")
         self.lbl_last_mod.setHidden(False)
 
+        # pages
+        self.views = {
+            "quick_text": 0,
+            "messages": 1
+        }
+
         # is_setup_needed loads proper variables for below
         self.user_settings = UserSettings()
         self.client: Client = None
@@ -31,6 +37,15 @@ class Main(QMainWindow, Ui_MainWindow):
         self.tbl_csv_viewer.clicked.connect(self.text_change)
         self.btn_send_message.clicked.connect(self.send_messages)
         self.btn_refresh.clicked.connect(self.load_csv_file)
+
+        # 'windows' menu
+        self.action_messages.triggered.connect(lambda: self.stacked_frame.setCurrentIndex(self.views["messages"]))
+        self.action_quick_text.triggered.connect(lambda: self.stacked_frame.setCurrentIndex(self.views["quick_text"]))
+
+    def get_list_of_messages(self, limit):
+        # todo this
+        for item in self.client.messages.list(limit=limit, to=self.user_settings.get_twilio_phone_number()):
+            print(item.from_, item.to, item.body)
 
     def setup_twilio_client(self):
         self.client = Client(
@@ -212,9 +227,6 @@ class Main(QMainWindow, Ui_MainWindow):
             phone_number_selected = action.text()[0:12]  #0:12 is string slicing the phone number
             self.user_settings.set_twilio_phone_number(phone_number_selected)
             self.lbl_selected_phone_number.setText(phone_number_selected)
-
-            for item in self.client.messages.list(limit=100, to=self.user_settings.get_twilio_phone_number()):
-                print(item.from_, item.to, item.body)
 
         except AttributeError as error:
             self.show_error_window(f"Please load a CSV file in before sending a message", error)
