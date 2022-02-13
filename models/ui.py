@@ -51,6 +51,7 @@ class CsvTable(QTableWidget):
         self.setHorizontalHeaderLabels(self.horizontal_labels)
 
     def generate_table(self, csv_file_location):
+        EMPTY = ""
         contacts = self.generate_objects(csv_file_location)
         self.set_horizontal_labels()
         ROW_HEIGHT = 10
@@ -66,9 +67,10 @@ class CsvTable(QTableWidget):
         for row, contact in enumerate(contacts):
             self.setRowHeight(row, ROW_HEIGHT)
             for column in range(0, self.column_count):
-                contact_info = contact.info
                 self.setColumnWidth(column, TABLE_WIDTHS[column])
-                self.setItem(row, column, PyQt5.QtWidgets.QTableWidgetItem(str(contact_info.get(self.horizontal_labels[column]))))
+                # if contact.info.get(self.horizontal_labels[column]) == EMPTY:
+                #     raise ValueError("Cell in CSV is empty, ensure all cells have data")
+                self.setItem(row, column, PyQt5.QtWidgets.QTableWidgetItem(str(contact.info.get(self.horizontal_labels[column]))))
 
         self.set_horizontal_labels()
         return contacts

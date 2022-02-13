@@ -15,9 +15,24 @@ class ErrorWindow(QMessageBox):
         super(ErrorWindow, self).__init__(parent)
         self.setWindowTitle("Warning: Error")
         self.setText("Warning")
+        self.setIcon(QMessageBox.Critical)
+        self.setStandardButtons(QMessageBox.Close)
+        self.setDefaultButton(QMessageBox.Close)
+
+    def set_text(self, message):
+        self.setInformativeText(f"{message}")
+
+    def show_window(self):
+        self.exec_()
+
+class SuccessWindow(QMessageBox):
+    def __init__(self, parent=None):
+        super(SuccessWindow, self).__init__(parent)
+        self.setWindowTitle("Success")
+        self.setText("Success")
         self.setIcon(QMessageBox.Information)
-        self.setStandardButtons(QMessageBox.Cancel)
-        self.setDefaultButton(QMessageBox.Cancel)
+        self.setStandardButtons(QMessageBox.Close)
+        self.setDefaultButton(QMessageBox.Close)
 
     def set_text(self, message):
         self.setInformativeText(f"{message}")
@@ -41,7 +56,6 @@ class StartupWindow(QMainWindow, Ui_SetupWindow):
         try:
             self.user_settings.set_twilio_account_sid(self.ent_account_sid.text())
             self.user_settings.set_twilio_auth_token(self.ent_auth_token.text())
-            self.user_settings.set_twilio_phone_number(self.ent_phone_number.text())
             self.close()
         except ValueError as error:
             self.throw_error_window("Cannot set account information", error)

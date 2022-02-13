@@ -1,7 +1,7 @@
 from ui.main_window import Ui_MainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QIcon
-from models.windows import ErrorWindow, StartupWindow, FileWindow
+from models.windows import ErrorWindow, StartupWindow, FileWindow, SuccessWindow
 from models.objects import ContactList, UserSettings
 import os.path, time, PyQt5, sys
 from twilio.rest import Client
@@ -15,8 +15,9 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setWindowTitle("MassTextMessenger v0.1")
         self.lbl_last_mod.setHidden(False)
 
+        # is_setup_needed loads proper variables for below
         self.user_settings = UserSettings()
-        self.client = None
+        self.client: Client = None
         self.twilio_balance: float = None
         self.csv_variables_names: list[str] = None
         self.is_setup_needed()
@@ -31,6 +32,12 @@ class Main(QMainWindow, Ui_MainWindow):
         self.btn_send_message.clicked.connect(self.send_messages)
         self.btn_refresh.clicked.connect(self.load_csv_file)
 
+    def setup_twiio_client(self):
+        self.client = Client(
+            self.user_settings.get_twilio_account_sid(),
+            self.user_settings.get_twilio_auth_token()
+        )
+
     def is_setup_needed(self):
         # loads setup window if environment variables are not set
         if self.user_settings.get_twilio_account_sid() is None:
@@ -38,10 +45,7 @@ class Main(QMainWindow, Ui_MainWindow):
             setup_window.show()
             return True
         else:
-            self.client = Client(
-                self.user_settings.get_twilio_account_sid(),
-                self.user_settings.get_twilio_auth_token()
-            )
+            self.setup_twiio_client()
             # checks if csv is in settings.json, loads csv if true
             if self.user_settings['csvLocation']:
                 self.load_csv_file()
@@ -59,7 +63,16 @@ class Main(QMainWindow, Ui_MainWindow):
         self.lbl_last_mod.setHidden(False)
         self.lbl_last_mod.setText(f"Last Modified Date: {self.user_settings['csvLastModDate']}")
 
-    def throw_error_window(self, error_text: str, error=None):
+    def show_success_window(self, error_text: str, error=None):
+        messagebox = SuccessWindow(self)
+
+        if error:
+            messagebox.setText(f"{error_text}\nSuccess Message: {error}")
+        else:
+            messagebox.setText(f"{error_text}")
+        messagebox.show_window()
+
+    def show_error_window(self, error_text: str, error=None):
         messagebox = ErrorWindow(self)
 
         if error:
@@ -79,12 +92,12 @@ class Main(QMainWindow, Ui_MainWindow):
         self.ent_text_field.setText("")
 
     def send_messages(self):
-        # todo count amount of successful messages, display amount after
+        count = 0
         EMPTY = ""
 
         # checks if message field is empty
         if self.ent_text_field.toPlainText() == EMPTY:
-            self.throw_error_window("Text message is empty")
+            self.show_error_window("Text message is empty")
             return
 
         try:
@@ -94,17 +107,19 @@ class Main(QMainWindow, Ui_MainWindow):
                     message = self.replace_variables_with_text(self.ent_text_field.toPlainText(), contact.info)
                     self.sanitize_message(message)
                 except ValueError as error:
-                    self.throw_error_window(error)
+                    self.show_error_window(error)
                     return
                 try:
                     contact.text_contact(message)
+                    count += 1
                 except KeyError as error:
-                    self.throw_error_window(error)
+                    self.show_error_window(error)
         except TypeError as error:
-            self.throw_error_window("Please load a CSV file in before sending a message", error)
+            self.show_error_window("Please load a CSV file in before sending a message", error)
 
         self.clear_all_fields()
         self.refresh_twilio_balance()
+        self.show_success_window(f"{count} contacts texted successfully")
 
     def replace_variables_with_text(self, message: str, contact_info: dict):
         EMPTY = ""
@@ -140,16 +155,38 @@ class Main(QMainWindow, Ui_MainWindow):
             current_text = self.replace_variables_with_text(current_text, contact_info)
             self.ent_preview.setText(current_text)
         except TypeError as error:
-            self.throw_error_window(f"Please load a CSV file in before sending a message", error)
+            self.show_error_window(f"Please load a CSV file in before sending a message", error)
+
+    def check_csv_data_is_not_empty(self, col_name: str):
+        EMPTY = ""
+        OFFSET = 1  # offsets 0th index for CSV rows
+        col_name = col_name.replace("{{", "").replace("}}", "")
+
+        cells_missing_data = []
+        # adds missing data cells to list
+        for i, contact in enumerate(self.contact_list):
+            if contact.info[col_name] == EMPTY:
+                cells_missing_data.append(i + OFFSET)
+
+        if cells_missing_data:
+            raise ValueError(f"Col: {col_name} missing data in cells:\n{[str(int) for int in cells_missing_data]}")
+
 
     def add_variable(self, action):
+        variable_name = action.text()
+
+        try:
+            self.check_csv_data_is_not_empty(variable_name)
+        except ValueError as error:
+            self.show_error_window(error)
+            return
+
         # catches variable clicked before csv loaded error
         try:
-            variable_name = action.text()
             cursor_pos = self.ent_text_field.textCursor()
             cursor_pos.insertText(variable_name)
         except AttributeError as error:
-            self.throw_error_window(f"Please load a CSV file in before sending a message", error)
+            self.show_error_window(f"Please load a CSV file in before sending a message", error)
 
     def create_variable_menu(self):
         menu = PyQt5.QtWidgets.QMenu()
@@ -165,7 +202,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.user_settings.set_twilio_phone_number(phone_number_selected)
             self.lbl_selected_phone_number.setText(phone_number_selected)
         except AttributeError as error:
-            self.throw_error_window(f"Please load a CSV file in before sending a message", error)
+            self.show_error_window(f"Please load a CSV file in before sending a message", error)
 
     def create_phone_number_menu(self):
         menu = PyQt5.QtWidgets.QMenu()
@@ -177,7 +214,7 @@ class Main(QMainWindow, Ui_MainWindow):
     def load_csv_from_file_window(self):
         file_window = FileWindow()
         if file_window.file_name is None:  # error
-            self.throw_error_window("The file you are attempting to select is not a .csv, please select a .csv file")
+            self.show_error_window("The file you are attempting to select is not a .csv, please select a .csv file")
             return
 
         self.user_settings['csvLocation'] = file_window.file_name
@@ -193,6 +230,7 @@ class Main(QMainWindow, Ui_MainWindow):
             pass
 
     def load_csv_file(self):
+        self.setup_twiio_client()
         self.lbl_last_mod.setHidden(False)
         self.clear_memory()
         self.contact_list = self.tbl_csv_viewer.generate_table(self.user_settings['csvLocation'])
