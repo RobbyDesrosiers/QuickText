@@ -41,6 +41,9 @@ class Ui_SetupWindow(object):
         self.label.setPixmap(QtGui.QPixmap(".\\ui\\twilio_logo.png"))
         self.label.setScaledContents(True)
         self.label.setObjectName("label")
+        self.check_test_mode = QtWidgets.QCheckBox(SetupWindow)
+        self.check_test_mode.setGeometry(QtCore.QRect(150, 95, 70, 17))
+        self.check_test_mode.setObjectName("check_test_mode")
 
         self.retranslateUi(SetupWindow)
         QtCore.QMetaObject.connectSlotsByName(SetupWindow)
@@ -52,3 +55,4 @@ class Ui_SetupWindow(object):
         self.lbl_auth_token.setText(_translate("SetupWindow", "Twilio Auth Token"))
         self.btn_submit.setText(_translate("SetupWindow", "Submit"))
         self.btn_cancel.setText(_translate("SetupWindow", "Cancel"))
+        self.check_test_mode.setText(_translate("SetupWindow", "Test Mode"))

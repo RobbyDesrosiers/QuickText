@@ -1,8 +1,8 @@
 from ui.main_window import Ui_MainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QIcon
-from models.windows import ErrorWindow, StartupWindow, FileWindow, SuccessWindow
-from models.objects import ContactList, UserSettings
+from models.windows import ErrorWindow, StartupWindow, FileWindow, SuccessWindow, ConsoleWindow
+from models.objects import ContactList, UserSettings, ContactReply
 import os.path, time, PyQt5, sys
 from twilio.rest import Client
 
@@ -12,7 +12,9 @@ class Main(QMainWindow, Ui_MainWindow):
         super().__init__(parent)
         self.setupUi(self)
         self.contact_list: ContactList = None       # gets loaded in from load_csv_file
-        self.setWindowTitle("MassTextMessenger v0.1")
+        self.name = "QuickText"
+        self.version = "0.8"
+        self.setTitle()
         self.lbl_last_mod.setHidden(False)
 
         # pages
@@ -39,19 +41,24 @@ class Main(QMainWindow, Ui_MainWindow):
         self.btn_refresh.clicked.connect(self.load_csv_file)
 
         # 'windows' menu
-        self.action_messages.triggered.connect(lambda: self.stacked_frame.setCurrentIndex(self.views["messages"]))
-        self.action_quick_text.triggered.connect(lambda: self.stacked_frame.setCurrentIndex(self.views["quick_text"]))
+        self.action_load_csv.triggered.connect(self.load_csv_from_file_window)
 
-    def get_list_of_messages(self, limit):
-        # todo this
-        for item in self.client.messages.list(limit=limit, to=self.user_settings.get_twilio_phone_number()):
-            print(item.from_, item.to, item.body)
+    def setTitle(self, additional_info=None):
+        if additional_info:
+            self.setWindowTitle(f"{self.name} - {self.version} | {additional_info}")
+        else:
+            self.setWindowTitle(f"{self.name} - {self.version}")
 
-    def setup_twilio_client(self):
-        self.client = Client(
-            self.user_settings.get_twilio_account_sid(),
-            self.user_settings.get_twilio_auth_token()
-        )
+
+
+    def setup_twilio_client(self, test_mode=False):
+        if test_mode:
+            return
+        else:
+            self.client = Client(
+                self.user_settings.get_twilio_account_sid(),
+                self.user_settings.get_twilio_auth_token()
+            )
 
     def is_setup_needed(self):
         # loads setup window if environment variables are not set
@@ -68,11 +75,15 @@ class Main(QMainWindow, Ui_MainWindow):
             return False
 
     def refresh_twilio_balance(self):
-        self.twilio_balance = self.client.api.v2010.account.balance.fetch().balance
-        self.setWindowTitle(f"MassTextMessenger v0.1 | Balance: {self.twilio_balance}")
+        if self.user_settings.get_test_mode() is False:
+            self.twilio_balance = self.client.api.v2010.account.balance.fetch().balance
+            self.setTitle(f"Balance: {self.twilio_balance}")
 
-    def twilio_available_phone_numbers(self):
-        return self.client.api.v2010.incoming_phone_numbers.list()
+    def twilio_available_phone_numbers(self, test_mode=False):
+        if test_mode:
+            return [""]
+        else:
+            return self.client.api.v2010.incoming_phone_numbers.list()
 
     def update_last_modified_date(self):
         self.lbl_last_mod.setHidden(False)
@@ -107,6 +118,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.ent_text_field.setText("")
 
     def send_messages(self):
+        test_mode_messages = []
         count_success = 0
         count_failure = 0
         EMPTY = ""
@@ -133,15 +145,23 @@ class Main(QMainWindow, Ui_MainWindow):
                     return
                 try:
                     success = contact.text_contact(message)
+                    if self.user_settings.get_test_mode():
+                        test_mode_messages.append(contact.message_text)
+
                     if success is True:
                         count_success += 1
                     else:
                         count_failure += 1
-
                 except KeyError as error:
                     self.show_error_window(error)
         except TypeError as error:
             self.show_error_window("Please load a CSV file in before sending a message", error)
+
+        if self.user_settings.get_test_mode():
+            console = ConsoleWindow(self)
+            console.write_to_console(test_mode_messages)
+            console.show()
+
 
         self.clear_all_fields()
         self.refresh_twilio_balance()
@@ -198,7 +218,11 @@ class Main(QMainWindow, Ui_MainWindow):
 
 
     def add_variable(self, action):
-        variable_name = action.text()
+        try:
+            variable_name = action.text()
+        except AttributeError as error:
+            self.show_error_window("Load a CSV file before using this function", error)
+            return
 
         try:
             self.check_csv_data_is_not_empty(variable_name)
@@ -231,11 +255,21 @@ class Main(QMainWindow, Ui_MainWindow):
         except AttributeError as error:
             self.show_error_window(f"Please load a CSV file in before sending a message", error)
 
-    def create_phone_number_menu(self):
+    def create_phone_number_menu(self, test_mode=False):
         menu = PyQt5.QtWidgets.QMenu()
         menu.triggered.connect(self.select_phone_number_from_menu)
-        for phone_number in self.twilio_available_phone_numbers():
-            menu.addAction(f"{phone_number.phone_number} ({phone_number.friendly_name})")
+        if test_mode:
+            fake_numbers = [
+                "838-939-9293",
+                "555-938-9111",
+                "122-944-4361",
+                "744-828-2121"
+            ]
+            for phone_number in fake_numbers:
+                menu.addAction(phone_number)
+        else:
+            for phone_number in self.twilio_available_phone_numbers():
+                menu.addAction(f"{phone_number.phone_number} ({phone_number.friendly_name})")
         self.btn_phone_numbers.setMenu(menu)
 
     def load_csv_from_file_window(self):
@@ -244,11 +278,11 @@ class Main(QMainWindow, Ui_MainWindow):
             file_window.close()
             self.show_error_window("The file you are attempting to select is not a .csv, please select a .csv file")
             return
-
-        self.user_settings['csvLocation'] = file_window.file_name
-        self.user_settings['csvLastModDate'] = time.ctime(os.path.getmtime(self.user_settings['csvLocation']))
-        self.user_settings.save()
-        self.load_csv_file()
+        else:
+            self.user_settings['csvLocation'] = file_window.file_name
+            self.user_settings['csvLastModDate'] = time.ctime(os.path.getmtime(self.user_settings['csvLocation']))
+            self.user_settings.save()
+            self.load_csv_file()
 
     def clear_memory(self):
         try:
@@ -258,19 +292,26 @@ class Main(QMainWindow, Ui_MainWindow):
             pass
 
     def load_csv_file(self):
-        self.setup_twilio_client()
+        # todo edit this
+        self.setup_twilio_client(test_mode=self.user_settings.get_test_mode())
         self.lbl_last_mod.setHidden(False)
         self.clear_memory()
         try:
-            self.contact_list = self.tbl_csv_viewer.generate_table(self.user_settings['csvLocation'])
-        except (ValueError, UnboundLocalError) as error:
+            csv_location: str = self.user_settings['csvLocation']
+            self.contact_list: ContactList = self.tbl_csv_viewer.generate_objects(csv_location)
+            self.tbl_csv_viewer.generate_table(self.contact_list)
+        except (ValueError, UnboundLocalError, TypeError) as error:
             self.show_error_window("could not load CSV", error)
             return
-        self.lbl_item.setText(f"Contacts: {len(self.contact_list)}")
+        if self.user_settings.get_test_mode():
+            self.lbl_last_mod.setText(f"TEST MODE ENABLED | Contacts: {len(self.contact_list)}")
+        else:
+            self.lbl_item.setText(f"Contacts: {len(self.contact_list)}")
         self.create_variable_menu()
-        self.create_phone_number_menu()
+        self.create_phone_number_menu(test_mode=self.user_settings.get_test_mode())
         self.tbl_csv_viewer.resizeColumnsToContents()
         self.update_last_modified_date()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -7,6 +7,7 @@ import PyQt5
 from models.objects import UserSettings
 from ui.main_window import Ui_MainWindow
 from ui.setup_window import Ui_SetupWindow
+from ui.test_window import Ui_test_mode
 import json
 
 
@@ -41,6 +42,16 @@ class SuccessWindow(QMessageBox):
         self.exec_()
 
 
+class ConsoleWindow(QMainWindow, Ui_test_mode):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)
+        self.setWindowTitle("Message Console")
+
+    def write_to_console(self, messages):
+        for message in messages:
+            self.console.append(f"{message}")
+
 class StartupWindow(QMainWindow, Ui_SetupWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -51,6 +62,11 @@ class StartupWindow(QMainWindow, Ui_SetupWindow):
         self.ent_auth_token.setEchoMode(PyQt5.QtWidgets.QLineEdit.Password)
         self.btn_submit.clicked.connect(self.submit)
         self.btn_cancel.clicked.connect(self.close)
+        self.check_test_mode.stateChanged.connect(self.execute_test_mode)
+
+    def execute_test_mode(self):
+        self.user_settings.set_test_mode(True)
+        self.close()
 
     def submit(self):
         try:
@@ -93,7 +109,7 @@ class FileWindow(QWidget):
         self.setGeometry(self.left, self.top, self.width, self.height)
 
         self.openFileNameDialog()
-        self.show()
+        # self.show()
 
     def openFileNameDialog(self):
         options = QFileDialog.Options()

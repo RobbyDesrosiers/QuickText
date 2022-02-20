@@ -116,6 +116,19 @@
     <bool>true</bool>
    </property>
   </widget>
+  <widget class="QCheckBox" name="check_test_mode">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>95</y>
+     <width>70</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Test Mode</string>
+   </property>
+  </widget>
  </widget>
  <resources>
   <include location="twilio_logo.qrc"/>

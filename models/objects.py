@@ -11,48 +11,63 @@ class ContactList(list):
 class Contact:
     contact_list = ContactList()
 
-    def __init__(self, contact_info, append=True):
+    def __init__(self, contact_info: dict, test_mode=False):
         self._info: dict = contact_info
+        self._message_text = None
         self.user_settings = UserSettings()
-        self.client = Client(
-            self.user_settings.get_twilio_account_sid(),
-            self.user_settings.get_twilio_auth_token()
-        )
+        if test_mode is False:
+            self.client = Client(
+                self.user_settings.get_twilio_account_sid(),
+                self.user_settings.get_twilio_auth_token()
+            )
 
-        if append:
-            self.contact_list.append(self)
+        self.contact_list.append(self)
 
     def __repr__(self):
         return f"{self._info}"
+
+    @property
+    def message_text(self):
+        return self._message_text
+
+    @message_text.setter
+    def message_text(self, value: str):
+        self._message_text = value
 
     @property
     def info(self) -> dict:
         return self._info
 
     def text_contact(self, body):
-        if not phonenumbers.is_valid_number(phonenumbers.parse(f"+1{self.info.get('phone')}")):
-            return False
 
-        # debug output for console, swap in prod
-        print(f"F: {self.user_settings.get_twilio_phone_number()}\n"
-              f"T: {self.info['phone']}\n"
-              f"B: {body}\n")
-
-        # self.client.messages.create(  # todo uncomment this
-        #     body=body,
-        #     from_=self.user_settings.get_twilio_phone_number(),
-        #     to=f"+1{self.info['phone']}"
-        # )
-        return True
+        if self.user_settings.get_test_mode():
+            self._message_text = f"F: {self.user_settings.get_twilio_phone_number()}\n" \
+                                f"T: {self.info['phone']}\n" \
+                                f"B: {body}\n"
+        else:
+            if not phonenumbers.is_valid_number(phonenumbers.parse(f"+1{self.info.get('phone')}")):
+                return False
+            else:
+                # self.client.messages.create(  # todo uncomment this
+                #     body=body,
+                #     from_=self.user_settings.get_twilio_phone_number(),
+                #     to=f"+1{self.info['phone']}"
+                # )
+                return True
 
     def list(self) -> ContactList:
         return self.contact_list
+
+
+class ContactReply(Contact):
+    pass  # exact copy
 
 
 class UserSettings:
     twilio_account_sid = None
     twilio_auth_token = None
     twilio_phone_number = None
+    test_mode = False
 
     def __init__(self):
         self._settings = {
@@ -131,6 +146,14 @@ class UserSettings:
     def set_twilio_phone_number(cls, value: str):
         os.environ["TWILIO_PHONE_NUMBER"] = value
         cls.twilio_phone_number = value
+
+    @classmethod
+    def set_test_mode(cls, on):
+        cls.test_mode = on
+
+    @classmethod
+    def get_test_mode(cls):
+        return cls.test_mode
 
 
 

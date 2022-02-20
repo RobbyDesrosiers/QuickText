@@ -2,12 +2,13 @@ import csv
 
 import phonenumbers
 from PyQt5.QtWidgets import QTextEdit, QPushButton, QTableWidget, QMessageBox
-from models.objects import ContactList, Contact
+from models.objects import ContactList, Contact, UserSettings
 import PyQt5
 
 class CsvTable(QTableWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.user_settings = UserSettings()
         self.column_count = 0
         self.contact_list = None
         self.setColumnCount(self.column_count)
@@ -21,11 +22,6 @@ class CsvTable(QTableWidget):
     @horizontal_labels.setter
     def horizonal_labels(self, value: str):
         self._horizontal_labels = value.lower()
-
-    def add_header(self, header_name: str):
-        self.horizontal_labels.append(header_name)
-        self.setColumnCount(self.columnCount() + 1)
-        self.setHorizontalHeaderLabels(self.horizontal_labels)
 
     def calculate_col_widths(self):
         if self.column_count == 2:
@@ -51,9 +47,7 @@ class CsvTable(QTableWidget):
         # if loaded, set the labels in the table (since we are most likely generating table)
         self.setHorizontalHeaderLabels(self.horizontal_labels)
 
-    def generate_table(self, csv_file_location):
-        EMPTY = ""
-        contacts = self.generate_objects(csv_file_location)
+    def generate_table(self, contacts: ContactList):
         self.set_horizontal_labels()
         ROW_HEIGHT = 10
 
@@ -67,27 +61,26 @@ class CsvTable(QTableWidget):
             for column in range(0, self.column_count):
                 self.setItem(row, column, PyQt5.QtWidgets.QTableWidgetItem(str(contact.info.get(self.horizontal_labels[column]))))
         self.set_horizontal_labels()
-        return contacts
 
     def generate_objects(self, csv_file_location) -> ContactList:
-        OFFSET = 1  # used for col offset because 0th index
         row_count = 0
+        try:
+            with open(csv_file_location) as file:
+                dict_reader: list[dict] = csv.DictReader(file)
 
-        with open(csv_file_location) as file:
-            dict_reader: list[dict] = csv.DictReader(file)
-
-            for i, contact_info in enumerate(dict_reader):
-                row_count += 1
-                # iterates over first contact once, to check for phone column
-                if not contact_info.get('phone'):
-                    raise ValueError("CSV needs 'phone' column, please insert a column named: phone")
-                contact = Contact(contact_info)
+                for i, contact_info in enumerate(dict_reader):
+                    row_count += 1
+                    # iterates over first contact once, to check for phone column
+                    if not contact_info.get('phone'):
+                        raise ValueError("CSV needs 'phone' column, please insert a column named: phone")
+                    contact = Contact(contact_info, test_mode=self.user_settings.get_test_mode())
+        except FileNotFoundError:
+            raise ValueError("Previously loaded CSV file not found")
 
         if row_count > 499:
             raise ValueError("CSV is over 500 rows long, please reduce to < 500")
         self.contact_list = contact.list()
         return self.contact_list
-
 
 class VariableButton(QPushButton):
     def __init__(self, parent=None):
