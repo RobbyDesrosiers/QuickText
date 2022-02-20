@@ -48,11 +48,11 @@ class Contact:
             if not phonenumbers.is_valid_number(phonenumbers.parse(f"+1{self.info.get('phone')}")):
                 return False
             else:
-                # self.client.messages.create(  # todo uncomment this
-                #     body=body,
-                #     from_=self.user_settings.get_twilio_phone_number(),
-                #     to=f"+1{self.info['phone']}"
-                # )
+                self.client.messages.create(  # todo uncomment this
+                    body=body,
+                    from_=self.user_settings.get_twilio_phone_number(),
+                    to=f"+1{self.info['phone']}"
+                )
                 return True
 
     def list(self) -> ContactList:
